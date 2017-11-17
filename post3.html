@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Blog Page 3</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom fonts for this template -->
+    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+    <!-- Custom styles for this template -->
+    <link href="css/clean-blog.min.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+      <div class="container">
+        <!-- <a class="navbar-brand" href="index.html">Start Bootstrap</a> -->
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          Menu
+          <i class="fa fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="about.html">About</a>
+            </li>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Header -->
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+            <div class="post-heading">
+              <h2 class="post-title">
+                Ryan's Chipy Blog
+              </h2>
+              <h3 class="post-subtitle">
+                From Hatchling to Slightly Experienced Hatchling The Trilogy, Part 3
+              </h3>
+            </a>
+            <p class="post-meta">Posted by
+              <a href="#">Ryan Regan</a>
+              on November 16, 2017</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Post Content -->
+    <article>
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+            <h3>Hello Earth!</h3>
+              <p>It's the time of year again where I let all my invisible internet friends know about my Python adventures! So let's get down to it!</p>
+
+              <h3>Loggin' In!</h3>
+              <p>Over the past few days Evan and I have wrangled the Django system into letting us place the signup and login forms on the same page and I think we've really got something nice here. There's always room for more tests but it's such a careful line to walk when working with a codebase that you didn't write. Do I test to see if Django is still working like it was when I wrote the login? Is that a waste of time? What if Django radically rewrites their built-in login functions? In the end, I settled on a few simple tests, so let's dig in!</p>
+
+              <b><p>URLs</p></b>
+              <p>Here's the relevant parts of the url.py file we settled on:</p>
+              <pre>
+from django.conf.urls import url
+from django.contrib import admin
+from soundboard import views
+
+urlpatterns = [
+url(r'^admin/', admin.site.urls),
+url(r'^login/$', views.login_user, name='login_user'),
+url(r'^signup/$', views.signup, name='signup'),
+url(r'^login_or_signup/$', views.login_or_signup, name='login_or_signup'),
+]
+              </pre>
+
+              <p>The <code>login_or_signup/</code> URL is the landing page that the nav bar will point to. The specific signup and login routes will handle the given action of each flow, signing up and logging respectively. <code>login_user</code> will send you down to the <code>login</code> route, and <code>signup</code> to the <code>signup</code> route.</p>
+              <b><p>Template</p></b>
+              <pre>
+    {% extends 'soundboard/base.html' %}
+    {% block content %}
+
+  &lt;form method="post" action="/login/"&gt;
+    &lt;h4 class="card-title"&gt;
+      &lt;a href="#"&gt;Log In!&lt;/a&gt;
+    &lt;/h4&gt;
+    {% csrf_token %}
+    {{ authentication_form.as_p }}
+    &lt;button type="submit"&gt;Login&lt;/button&gt;
+  &lt;/form&gt;
+
+  &lt;form method="post" action="/signup/"&gt;
+    &lt;h4 class="card-title"&gt;
+      &lt;a href="#"&gt;Sign Up!&lt;/a&gt;
+    &lt;/h4&gt;
+    &lt;p class="card-text"&gt;To sign up, please provide an email, desired username, and password.&lt;/p&gt;
+    {% csrf_token %}
+    {{ user_creation_form.as_p }}
+    &lt;button type="submit"&gt;Sign up&lt;/button&gt;
+  &lt;/form&gt;
+
+  {% endblock %}
+            </pre>
+            <p>Here we're etablishing the login form from our views with the variable <code>authentication_form</code>, and letting Django populate that sucker with <code>as_p</code> which generates said form with &lt;p&gt; tags. We do the same for the signup form with the variable <code>user_creation_form</code>. This view might evolve over time with ever increased fancyness but this gets the job done for now. 
+
+              <b><p>Views</p></b>
+              <p>Here are the relevant parts of the views.py file needed to use Django's built-in user authentication tools.</p>
+              <pre>
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.models import User
+from django import forms
+               </pre>
+               <p>We opted to use decorators for the CSRF tokens due to the ease of use, and the rest were imported in order to use some built-in authentication features of Django. 
+               <pre>
+class SignUpForm(UserCreationForm):
+    email = forms.EmailField(max_length=254, help_text='Required. Submit a valid email address.')
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2', )
+                </pre>
+                <p>Here we're establishing the user model and adding in the email field to the <code>UserCreationForm</code>.</p>
+                <pre>
+@csrf_protect
+def login_user(request):
+    if request.method != 'POST':
+        return redirect('/login_or_signup/')
+    authentication_form = AuthenticationForm(data=request.POST)
+    if not authentication_form.is_valid():
+        return login_or_signup(request, authentication_form=authentication_form)
+    username = authentication_form.cleaned_data.get('username')
+    password = authentication_form.cleaned_data.get('password')
+    user = authenticate(username=username, password=password)
+    login(request, user)
+    return redirect('your_boards')
+                </pre>
+                <p>Alright so here comes some pure, unadaultered magic. So first thing's first, the form was decorated with CSRF tokens. Next some logic to prevent some <i>sneaky users</i> or an eager search index that tries to let a user try to pull a fast one and just GET themselves to a <code>login_user</code> route. They'll be appropriately redirected back to the <code>login_or_signup</code> route to POST a login attempt. Following this, if the authentication form isn't valid we'll send the user back to the form and let Django throw some validation messages on the form.</p>
+                <p>If the form submits with valid inputs, we'll redirect the user to the <code>your_boards</code> URL, which is the logical place for soundboard users to be after a successful login.</p>
+                <pre>
+@csrf_protect
+def signup(request):
+    if request.method != 'POST':
+        return redirect('/login_or_signup/')
+    user_creation_form = SignUpForm(data=request.POST)
+    if not user_creation_form.is_valid():
+        return login_or_signup(request, user_creation_form=user_creation_form)
+    user_creation_form.save()
+    username = user_creation_form.cleaned_data.get('username')
+    password = user_creation_form.cleaned_data.get('password1')
+    user = authenticate(username=username, password=password)
+    login(request, user)
+    return redirect('your_boards')
+                </pre>
+                <p>The signup form follows more or less the same logic as the login. CSRF protected, no sneaky GETs, and we'll let Django handle the validations to the user models.</p>
+                <pre>
+def login_or_signup(request, authentication_form=None, user_creation_form=None):
+    if authentication_form is None:
+        authentication_form = AuthenticationForm()
+    if user_creation_form is None:
+        user_creation_form = SignUpForm()
+    return render(request, "soundboard/login_or_signup.html", {'authentication_form': authentication_form,
+        'user_creation_form': user_creation_form})
+              </pre>
+              <p>Finally, we set up some logic for <code>login_or_signup</code> to display each form without any settings in place each time one form is submitted and potentially redirected back to the page.</p>
+
+              <h3>Tests!</h3>
+              <p>While writing some functional that gets one to your next step is all fine and good, you'll want to add some tests in place that affirm your code does what you set out for it to do. Moreover, it's a good means for future developers (myself included) of this open source soundboard generator to ensure their updates don't break key functionatly. Here's some basic tests we settled on to make sure things run 👌.</p>
+              <p>These tests should be very self explanitory (otherwise they don't really work well as tests) so I'll keep the words to a minimum.</p> 
+
+              <pre>
+                from django.test import TestCase, Client
+from django.contrib.auth.models import User
+
+class AuthenticationTestCase(TestCase):
+    def test_signup_creates_user(self):
+        client = Client()
+
+        client.post('/signup/', {
+            'username': 'ryguy',
+            'email': 'ryguy@example.com',
+            'password1': 'mtxMAPC6ch1EP',
+            'password2': 'mtxMAPC6ch1EP',
+        })
+
+        new_user = User.objects.get(username='ryguy')
+        self.assertEqual(new_user.email, 'ryguy@example.com')
+              </pre>
+               <p>POSTing a valid form to the signup route makes a new user with the data from that form.</p> 
+              <pre>
+    def test_signup_redirects_to_your_boards(self):
+        client = Client()
+
+        response = client.post('/signup/', {
+            'username': 'ryguy',
+            'email': 'ryguy@example.com',
+            'password1': 'mtxMAPC6ch1EP',
+            'password2': 'mtxMAPC6ch1EP',
+        })
+
+        self.assertEqual(response.url, '/your_boards/')
+              </pre>
+              <p>After a successful signup, we redirect the user to your_boards.</p>
+              <pre>
+    def test_login_redirects_to_your_boards(self):
+        User.objects.create_user('ryguy', 'ryguy@example.com', 'mtxMAPC6ch1EP')
+        client = Client()
+
+        response = client.post('/login/', {
+            'username': 'ryguy',
+            'password': 'mtxMAPC6ch1EP',
+        })
+
+        self.assertEqual(response.url, '/your_boards/')
+              </pre>
+              <p>Just like with a signup, a successful login gets redirected to your_boards</p>
+              <pre>
+    def test_get_call_to_login_redirects_to_login_or_signup(self):
+    client = Client()
+
+    response = client.get('/login/')
+
+    self.assertEqual(response.url, '/login_or_signup/')
+              <pre>
+              </pre>
+    def test_get_call_to_signup_redirects_to_login_or_signup(self):
+    client = Client()
+
+    response = client.get('/signup/')
+
+    self.assertEqual(response.url, '/login_or_signup/')
+
+              </pre>
+              <p>A sneaky GET is met with a redirect back to signup_or_login.</p>
+
+              <p>And that's just about it! The site now lets you sign up and log in, and we didn't compromise on separating those two view onto descrete URL's. I'm super happy about how all this went and learned a LOT about testing and general Django wranglin'.</p>
+
+              <h3>Conclusions</h3>
+              <p>Since this is the final sanctioned blog, it'll probably be a good while before I update you all with anymore progress. However I have good faith I'll be able to at least pull off a basic sound upload UI and some basic soundboard templates before the big day in December.</p>
+              <p>Oh and before I forget, Evan is amazing and I legitimately look forward to every opprotunity I have left to work with him on this project. Chipy rules, Python rules and I am one lucky duck to have been admitted into this program. Someday I hope to be able to give back so I'll keep at it untill then!</p>   
+              <a href="http://ryguy.website:8080/"><u>The Development Soundboard Link For The Curious</u></a>
+              <br><br>
+            
+					<p>Untill next time!</p>
+
+
+            <h3>Fin</h3>
+
+            <a href="#">
+              <img class="img-fluid" src="img/hatchling.jpg" alt="">
+            </a>
+
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <hr>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 col-md-10 mx-auto">
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/popper/popper.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Custom scripts for this template -->
+    <script src="js/clean-blog.min.js"></script>
+
+  </body>
+
+</html>
